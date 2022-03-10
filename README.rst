@@ -2,8 +2,9 @@
 802.15.4 to netJSON
 ===================
 
-A tool to visualize 802.15.4 Zigbee communication, can be useful for
+A tool to visualize 802.15.4 PCAP file turning it to netJSON, can be useful for
 Zigbee, Thread.
+Visualization thank to netJSONgraph.
 
 .. image:: doc/network-example.png
 
@@ -37,6 +38,13 @@ probing, unit tests, attacks or network discovery (it can replace hping,
 
 It is the unique dependency of this library.
 
+install the dependency
+----------------------
+
+In your shell or console
+
+``python -m pip install -r requirements.txt``
+
 Usage
 -----
 
@@ -46,10 +54,3 @@ view. The serve token serve the netJSONgraph view of the netJSON opened in the
 browser at http://localhost:8005/.
 
 ``python 802dot15dot4_to_netjson.py <PCAP filepath> --zigbee --serve``
-
-install the dependency
-----------------------
-
-In your shell or console
-
-``python -m pip install -r requirements.txt``
