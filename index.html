@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link href="netjsongraph.js/src/netjsongraph.css" rel="stylesheet">
+    <!-- custom theme example -->
+    <style type="text/css">
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .njg-overlay {
+            width: auto;
+            height: auto;
+            min-width: 200px;
+            max-width: 400px;
+            border: 1px solid #000;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            top: 10px;
+            right: 10px;
+            padding: 0 15px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #fff
+        }
+
+        .njg-node {
+            fill: #008000;
+            fill-opacity: 0.8;
+            stroke: #008000;
+            stroke-width: 1px;
+            cursor: pointer;
+        }
+
+        .njg-node:hover,
+        .njg-node.njg-open {
+            fill-opacity: 1;
+        }
+
+        .njg-link {
+            stroke: #00ff00;
+            stroke-width: 2;
+            stroke-opacity: .5;
+            cursor: pointer;
+        }
+
+        .njg-link:hover,
+        .njg-link.njg-open {
+            stroke-width: 3;
+            stroke-opacity: 1
+        }
+    </style>
+</head>
+
+<body>
+    <h1>
+        View of the 802.15.4 network from the <a href="./netjson.json" target="_blank">./netjson.json</a> <span
+            id="h1-date-time"></span>
+    </h1>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"
+        integrity="sha512-oJp0DdQuQQrRsKVly+Ww6fAN1GwJN7d1bi8UubpEbzDUh84WrJ2CFPBnT4LqBCcfqTcHR5OGXFFhaPe3g1/bzQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="netjsongraph.js/src/netjsongraph.js"></script>
+    <script>
+        d3.netJsonGraph("netjson.json");
+        let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+            'August', 'September', 'October', 'November', 'December'];
+        let now = new Date();
+        document.getElementById("h1-date-time").innerHTML = `${now.getHours()}:${now.getMinutes()}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    </script>
+
+</body>
+
+</html>
