@@ -5,6 +5,8 @@
 A tool to visualize 802.15.4 Zigbee communication, can be useful for
 Zigbee, Thread.
 
+.. image:: doc/network-example.png
+
 netJSON
 -------
 
