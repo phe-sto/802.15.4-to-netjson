@@ -50,7 +50,12 @@ Usage
 
 Just need the PCAP filepath as input, can be piped. A ``--zigbee`` token
 can be added to get read of the broadcast communication for a clearer
-view. The serve token serve the netJSONgraph view of the netJSON opened in the
-browser at http://localhost:8005/.
+view. As per the specification all the nodes above 0xfff7 are reserved for
+broadcast communication and will be removed. The serve token serve the
+netJSONgraph view of the netJSON opened in the browser at http://localhost:8005/.
 
 ``python 802dot15dot4_to_netjson.py <PCAP filepath> --zigbee --serve``
+
+To just create the netJSON file remove the --serve token.
+
+``python 802dot15dot4_to_netjson.py <PCAP filepath>``
