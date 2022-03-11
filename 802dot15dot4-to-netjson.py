@@ -196,9 +196,10 @@ if __name__ == "__main__":
                         help='Serve the web page using netJSONgraph and open it'
                         )
     args = parser.parse_args()
+    # Fill two sets of nodes and links to formerly fill the netJSON
     nodes, links = parse_pcap(args.infile, args.zigbee, args.min, args.max)
-    # Write the output JSON file using a hardcoded filename to be used by other
-    # modules
+    # Write the output netJSON file using a hardcoded filename to be used by
+    # other modules
     with open('netjson.json', 'w') as netjson_file:
         netjson_file.write(
             json.dumps({
