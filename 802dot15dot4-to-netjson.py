@@ -30,7 +30,6 @@ class Node:
     """
     Node as described in netJSON specification
     """
-    graph_id: int
     id: int
     pan_id: int
 
@@ -45,26 +44,35 @@ class Node:
             )
         }
 
+    @property
+    def graph_id(self):
+        """
+        Graph ID is considered as unique when it is the combination of a node ID
+        and a PAN ID.
+        """
+        return abs(hash("%d%d" % (self.id, self.pan_id)))
+
     def __hash__(self):
         """
-        Hash to be added to a set.
+        Hash to be added to a set, equal to the graph ID as this one also define
+        uniqueness of a device i.e. a node ID on a  PAN ID.
         """
-        return hash("%d%d" % (self.id, self.pan_id))
+        return self.graph_id
 
 
 @dataclass
 class Link:
     """Link as described in netJSON specification"""
-    src_node_id: int
-    dst_node_id: int
+    src_graph_id: int
+    dst_graph_id: int
 
     def __repr__(self):
         """
         Representation is a JSON to smoothly create a netJSON
         """
         return {
-            'source': self.src_node_id,
-            'target': self.dst_node_id,
+            'source': self.src_graph_id,
+            'target': self.dst_graph_id,
             'cost': 1.0
         }
 
@@ -72,7 +80,7 @@ class Link:
         """
         Hash to be added to a set.
         """
-        return hash("%d%d" % (self.src_node_id, self.dst_node_id))
+        return hash("%d%d" % (self.src_graph_id, self.dst_graph_id))
 
 
 def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
@@ -118,7 +126,7 @@ def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
                     min_packet <= packet_number <= max_packet
             ):
                 if zigbee is True and packet[Dot15d4Data].dest_addr > 0xfff8:
-                # Skip Zigbee broadcast communication for a clearer view
+                    # Skip Zigbee broadcast communication for a clearer view
                     continue
                 else:
                     logging.debug(
@@ -130,36 +138,21 @@ def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
                         )
                     )
                     # Add source node to the set
-                    source_graph_id = abs(
-                        hash("%s%s" % (packet[Dot15d4Data].dest_panid,
-                                       packet[Dot15d4Data].src_addr)
-                             )
+                    src_node = Node(
+                        packet[Dot15d4Data].src_addr,
+                        packet[Dot15d4Data].dest_panid
                     )
-                    nodes.add(
-                        Node(
-                            source_graph_id,
-                            packet[Dot15d4Data].src_addr,
-                            packet[Dot15d4Data].dest_panid
-                        )
-                    )
+                    nodes.add(src_node)
                     # Add destination node to the set
-                    destination_graph_id = abs(
-                        hash(
-                            "%s%s" % (packet[Dot15d4Data].dest_panid,
-                                      packet[Dot15d4Data].dest_addr)
-                        )
+                    dest_node = Node(
+                        packet[Dot15d4Data].dest_addr,
+                        packet[Dot15d4Data].dest_panid
                     )
-                    nodes.add(
-                        Node(
-                            destination_graph_id,
-                            packet[Dot15d4Data].dest_addr,
-                            packet[Dot15d4Data].dest_panid
-                        )
-                    )
+                    nodes.add(dest_node)
                     # Add link between source and destination
                     links.add(
-                        Link(source_graph_id,
-                             destination_graph_id)
+                        Link(src_node.graph_id,
+                             dest_node.graph_id)
                     )
             # After the last packet to parse, leave the loop.
             elif max_packet is not None and packet_number >= max_packet:

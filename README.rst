@@ -5,6 +5,7 @@
 A tool to visualize 802.15.4 PCAP file turning it to netJSON, can be useful for
 Zigbee, Thread.
 Visualization thank to netJSONgraph.
+This Python script runs into Python 3.7 or newer as it uses `dataclass`.
 
 .. image:: doc/network-example.png
 
