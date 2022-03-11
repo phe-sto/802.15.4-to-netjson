@@ -44,7 +44,7 @@ install the dependency
 
 In your shell or console
 
-``python -m pip install -r requirements.txt``
+    ``python -m pip install -r requirements.txt``
 
 Usage
 -----
@@ -55,13 +55,23 @@ view. As per the specification all the nodes above 0xfff7 are reserved for
 broadcast communication and will be removed. The serve token serve the
 netJSONgraph view of the netJSON opened in the browser at http://localhost:8005/.
 
-``python 802dot15dot4_to_netjson.py <PCAP filepath> --zigbee --serve``
+    ``python 802dot15dot4_to_netjson.py <PCAP filepath> --zigbee --serve``
 
 To just create the netJSON file remove the --serve token.
 
-``python 802dot15dot4_to_netjson.py <PCAP filepath>``
+    ``python 802dot15dot4_to_netjson.py <PCAP filepath>``
 
 Optional argument `--min` and `--max` specify the first and last packet to
 analyze.
 
-``python 802dot15dot4_to_netjson.py <PCAP filepath>``
+Start analysis frame 1000:
+
+    ``python 802dot15dot4_to_netjson.py <PCAP filepath> --min=1000``
+
+From beginning till frame 1000:
+
+    ``python 802dot15dot4_to_netjson.py <PCAP filepath> --max=1000``
+
+From frame 1000 to 2000:
+
+    ``python 802dot15dot4_to_netjson.py <PCAP filepath> --min=1000 --max=2000``
