@@ -75,22 +75,22 @@ class Link:
         return hash("%d%d" % (self.src_node_id, self.dst_node_id))
 
 
-def parse_pcap(pcap: str, zigbee: bool):
+def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
     """
-    Main function parsing the input pcap path.
+    Main function parsing the input pcap path. It parses the PCAP in between an
+    interval of a defined number or the whole file.
     Use scapy to read this pcap.
 
        :parameter pcap: File object of the PCAP to parse, not the path.
        :parameter zigbee: Zigbee broadcast communication skip for a clearer
-           view.
+          view.
+       :parameter min_packet: First packet of the PCAP to parse, default is 0.
+       :parameter max_packet: Last packet of the PCAP file to parse, default is
+          None, which mean no limit.
 
     It exclude all types of broadcast communication are exclude if the zigbee
     boolean is True for a clearer view. See the note containing an extract of
     the Zigbee specification 3.6.5 paragraph listing the different address.
-
-       :pan_id: Destination PAN ID of the frame.
-       :source_id: Source ID of the frame
-       :destination_id:  Destination ID of the frame
 
     .. note::
 
@@ -112,50 +112,58 @@ def parse_pcap(pcap: str, zigbee: bool):
     # Iterate over the PCAP
     for packet_number, packet in enumerate(rdpcap(pcap)):
         try:
-            if zigbee is True and packet[Dot15d4Data].dest_addr > 0xfff8:
+            # Only analyse the packets in between the desired interval
+            if (
+                    min_packet <= packet_number and max_packet is None) or (
+                    min_packet <= packet_number <= max_packet
+            ):
+                if zigbee is True and packet[Dot15d4Data].dest_addr > 0xfff8:
                 # Skip Zigbee broadcast communication for a clearer view
-                continue
-            else:
-                logging.debug(
-                    'Frame %d from %#x to %#x on PAN %#x' % (
-                        packet_number,
-                        packet[Dot15d4Data].src_addr,
-                        packet[Dot15d4Data].dest_addr,
-                        packet[Dot15d4Data].dest_panid
+                    continue
+                else:
+                    logging.debug(
+                        'Frame %d from %#x to %#x on PAN %#x' % (
+                            packet_number,
+                            packet[Dot15d4Data].src_addr,
+                            packet[Dot15d4Data].dest_addr,
+                            packet[Dot15d4Data].dest_panid
+                        )
                     )
-                )
-                # Add source node to the set
-                source_graph_id = abs(
-                    hash("%s%s" % (packet[Dot15d4Data].dest_panid,
-                                   packet[Dot15d4Data].src_addr)
-                         )
-                )
-                nodes.add(
-                    Node(
-                        source_graph_id,
-                        packet[Dot15d4Data].src_addr,
-                        packet[Dot15d4Data].dest_panid
+                    # Add source node to the set
+                    source_graph_id = abs(
+                        hash("%s%s" % (packet[Dot15d4Data].dest_panid,
+                                       packet[Dot15d4Data].src_addr)
+                             )
                     )
-                )
-                # Add destination node to the set
-                destination_graph_id = abs(
-                    hash(
-                        "%s%s" % (packet[Dot15d4Data].dest_panid,
-                                  packet[Dot15d4Data].dest_addr)
+                    nodes.add(
+                        Node(
+                            source_graph_id,
+                            packet[Dot15d4Data].src_addr,
+                            packet[Dot15d4Data].dest_panid
+                        )
                     )
-                )
-                nodes.add(
-                    Node(
-                        destination_graph_id,
-                        packet[Dot15d4Data].dest_addr,
-                        packet[Dot15d4Data].dest_panid
+                    # Add destination node to the set
+                    destination_graph_id = abs(
+                        hash(
+                            "%s%s" % (packet[Dot15d4Data].dest_panid,
+                                      packet[Dot15d4Data].dest_addr)
+                        )
                     )
-                )
-                # Add link between source and destination
-                links.add(
-                    Link(source_graph_id,
-                         destination_graph_id)
-                )
+                    nodes.add(
+                        Node(
+                            destination_graph_id,
+                            packet[Dot15d4Data].dest_addr,
+                            packet[Dot15d4Data].dest_panid
+                        )
+                    )
+                    # Add link between source and destination
+                    links.add(
+                        Link(source_graph_id,
+                             destination_graph_id)
+                    )
+            # After the last packet to parse, leave the loop.
+            elif max_packet is not None and packet_number >= max_packet:
+                break
         except IndexError as error:
             logging.debug(
                 """Could not parse 802.15.4 frame %d containing %s
@@ -175,6 +183,14 @@ if __name__ == "__main__":
                         type=str,
                         default=sys.stdin,
                         help='Input PCAP file')
+    parser.add_argument('--min',
+                        type=int,
+                        default=0,
+                        help='First packet of the PCAP to parse')
+    parser.add_argument('--max',
+                        type=int,
+                        default=None,
+                        help='Last packet of the PCAP file to parse')
     parser.add_argument('--zigbee',
                         action='store_true',
                         default=False,
@@ -185,7 +201,7 @@ if __name__ == "__main__":
                         help='Serve the web page using netJSONgraph and open it'
                         )
     args = parser.parse_args()
-    nodes, links = parse_pcap(args.infile, args.zigbee)
+    nodes, links = parse_pcap(args.infile, args.zigbee, args.min, args.max)
     # Write the output JSON file using a hardcoded filename to be used by other
     # modules
     with open('netjson.json', 'w') as netjson_file:
