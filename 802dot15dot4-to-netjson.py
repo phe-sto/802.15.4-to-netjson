@@ -28,14 +28,14 @@ logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 @dataclass
 class Node:
     """
-    Node as described in netJSON specification
+    Node as described in netJSON specification.
     """
     id: int
     pan_id: int
 
     def __repr__(self):
         """
-        Representation is a JSON to smoothly create a netJSON
+        Representation is a JSON to smoothly create a netJSON.
         """
         return {
             'id': self.graph_id,
@@ -62,13 +62,15 @@ class Node:
 
 @dataclass
 class Link:
-    """Link as described in netJSON specification"""
+    """
+    Link as described in netJSON specification.
+    """
     src_graph_id: int
     dst_graph_id: int
 
     def __repr__(self):
         """
-        Representation is a JSON to smoothly create a netJSON
+        Representation is a JSON to smoothly create a netJSON.
         """
         return {
             'source': self.src_graph_id,
