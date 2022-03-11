@@ -61,7 +61,7 @@ To just create the netJSON file remove the --serve token:
 
     ``python 802dot15dot4_to_netjson.py <PCAP filepath>``
 
-Optional argument `--min` and `--max` specify the first and last packet to
+Optional argument ``--min`` and ``--max`` specify the first and last packet to
 analyze.
 
 Start analysis frame 1000:
