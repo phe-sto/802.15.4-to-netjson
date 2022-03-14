@@ -33,9 +33,11 @@ class Node:
     id: int
     pan_id: int
 
-    def __repr__(self):
+    @property
+    def __dict__(self):
         """
-        Representation is a JSON to smoothly create a netJSON.
+        A Python object to smoothly create a netJSON using vars or __dict__ and
+        json.dumps.
         """
         return {
             'id': self.graph_id,
@@ -68,9 +70,11 @@ class Link:
     src_graph_id: int
     dst_graph_id: int
 
-    def __repr__(self):
+    @property
+    def __dict__(self):
         """
-        Representation is a JSON to smoothly create a netJSON.
+        A Python object to smoothly create a netJSON using vars or __dict__ and
+        json.dumps.
         """
         return {
             'source': self.src_graph_id,
@@ -208,8 +212,9 @@ if __name__ == "__main__":
                 'protocol': '802.15.4',
                 'version': None,
                 'metric': 'hop',
-                'nodes': tuple(node.__repr__() for node in nodes),
-                'links': tuple(link.__repr__() for link in links)
+                # Cast both sets below as tuple to be serialized in JSON
+                'nodes': tuple(vars(node) for node in nodes),
+                'links': tuple(vars(link) for link in links)
             })
         )
     # Serve and open a browser tab if the serve is True
