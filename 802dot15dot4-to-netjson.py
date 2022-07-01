@@ -16,13 +16,16 @@ import logging
 import sys
 import webbrowser
 from dataclasses import dataclass
+from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from scapy.all import rdpcap
 from scapy.config import conf
-from scapy.layers.dot15d4 import Dot15d4Data
+from scapy.layers.dot15d4 import Dot15d4Data, Dot15d4Cmd
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+
+MIN_BROADCAST_ADDRESS = 0xfff8
 
 
 @dataclass
@@ -89,6 +92,46 @@ class Link:
         return hash("%d%d" % (self.src_graph_id, self.dst_graph_id))
 
 
+def parse_packet_and_log(packet, packet_number, layer, nodes, links, zigbee):
+    try:
+        if zigbee is True and packet[layer].dest_addr > MIN_BROADCAST_ADDRESS:
+            # Skip Zigbee broadcast communication for a clearer view
+            pass
+        else:
+            logging.debug(
+                'Frame %d from %#x to %#x on PAN %#x' % (
+                    packet_number,
+                    packet[layer].src_addr,
+                    packet[layer].dest_addr,
+                    packet[layer].dest_panid
+                )
+            )
+            # Add source node to the set
+            src_node = Node(
+                packet[layer].src_addr,
+                packet[layer].dest_panid
+            )
+            nodes.add(src_node)
+            # Add destination node to the set
+            dest_node = Node(
+                packet[layer].dest_addr,
+                packet[layer].dest_panid
+            )
+            nodes.add(dest_node)
+            # Add link between source and destination
+            links.add(
+                Link(src_node.graph_id,
+                     dest_node.graph_id)
+            )
+    except IndexError as error:
+        logging.debug(
+            """Could not parse 802.15.4 frame %d containing %s
+            \tThe following error wa raised %s""" % (
+                packet_number, packet, error
+            )
+        )
+
+
 def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
     """
     Main function parsing the input pcap path. It parses the PCAP in between an
@@ -123,53 +166,22 @@ def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
     # Configure scapy for Zigbee
     if zigbee is True:
         conf.dot15d4_protocol = "zigbee"
+    short_parse_packet_and_log = partial(parse_packet_and_log, zigbee=zigbee)
     # Iterate over the PCAP
     for packet_number, packet in enumerate(rdpcap(pcap)):
-        try:
-            # Only analyse the packets in between the desired interval
-            if (
-                    min_packet <= packet_number and max_packet is None) or (
-                    min_packet <= packet_number <= max_packet
-            ):
-                if zigbee is True and packet[Dot15d4Data].dest_addr > 0xfff8:
-                    # Skip Zigbee broadcast communication for a clearer view
-                    continue
-                else:
-                    logging.debug(
-                        'Frame %d from %#x to %#x on PAN %#x' % (
-                            packet_number,
-                            packet[Dot15d4Data].src_addr,
-                            packet[Dot15d4Data].dest_addr,
-                            packet[Dot15d4Data].dest_panid
-                        )
-                    )
-                    # Add source node to the set
-                    src_node = Node(
-                        packet[Dot15d4Data].src_addr,
-                        packet[Dot15d4Data].dest_panid
-                    )
-                    nodes.add(src_node)
-                    # Add destination node to the set
-                    dest_node = Node(
-                        packet[Dot15d4Data].dest_addr,
-                        packet[Dot15d4Data].dest_panid
-                    )
-                    nodes.add(dest_node)
-                    # Add link between source and destination
-                    links.add(
-                        Link(src_node.graph_id,
-                             dest_node.graph_id)
-                    )
-            # After the last packet to parse, leave the loop.
-            elif max_packet is not None and packet_number >= max_packet:
-                break
-        except IndexError as error:
-            logging.debug(
-                """Could not parse 802.15.4 frame %d containing %s
-                \tThe following error wa raised %s""" % (
-                    packet_number, packet, error
-                )
-            )
+        # Only analyse the packets in between the desired interval
+        if (
+                min_packet <= packet_number and max_packet is None) or (
+                min_packet <= packet_number <= max_packet
+        ):
+            # 802.15.4 data, meaning all the Zigbee and more
+            short_parse_packet_and_log(packet=packet, packet_number=packet_number, layer=Dot15d4Data, nodes=nodes, links=links)
+            # 802.15.4 commands
+            short_parse_packet_and_log(packet=packet, packet_number=packet_number, layer=Dot15d4Cmd, nodes=nodes, links=links)
+
+        # After the last packet to parse, leave the loop.
+        elif max_packet is not None and packet_number >= max_packet:
+            break
     return nodes, links
 
 

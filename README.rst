@@ -3,7 +3,8 @@
 ===================
 
 A tool to visualize 802.15.4 PCAP file turning it to netJSON, can be useful for
-Zigbee, Thread.
+Zigbee, Thread. It uses the two layers including a destination and source short
+address, Command and Data layers.
 Visualization thank to netJSONgraph.
 This Python script runs into Python 3.7 or newer as it uses `dataclass`.
 
