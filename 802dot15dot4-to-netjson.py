@@ -93,6 +93,32 @@ class Link:
 
 
 def parse_packet_and_log(packet, packet_number, layer, nodes, links, zigbee):
+    """
+    Parse the packet using scapy and a defined layer.
+    Only extract source and destination, short address and pan ID.
+    Verify tha packet is in the interval pass as argument.
+    It excludes all types of broadcast communication are excluded if the zigbee
+    boolean is True for a clearer view. See the note containing an extract of
+    the Zigbee specification 3.6.5 paragraph listing the different address.
+
+       :parameter packet: Packet scapy object to parse.
+       :parameter packet_number: Number of the packet in the capture.
+       :parameter layer: Layer to parse.
+       :parameter nodes: Set of nodes.
+       :parameter links: Set of links.
+       :parameter zigbee: Boolean to treat the packet as part of Zigbee network.
+
+    .. note::
+
+       3.6.5 Broadcast Communication
+
+          - 0xffff: All devices in PAN
+          - 0xfffe: Reserved
+          - 0xfffd: macRxOnWhenIdle = TRUE
+          - 0xfffc: All routers and coordinator
+          - 0xfffb: Low power routers only
+          - 0xfff8 - 0xfffa: Reserved
+    """
     try:
         if zigbee is True and packet[layer].dest_addr > MIN_BROADCAST_ADDRESS:
             # Skip Zigbee broadcast communication for a clearer view
@@ -144,21 +170,6 @@ def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
        :parameter min_packet: First packet of the PCAP to parse, default is 0.
        :parameter max_packet: Last packet of the PCAP file to parse, default is
           None, which mean no limit.
-
-    It excludes all types of broadcast communication are excluded if the zigbee
-    boolean is True for a clearer view. See the note containing an extract of
-    the Zigbee specification 3.6.5 paragraph listing the different address.
-
-    .. note::
-
-       3.6.5 Broadcast Communication
-
-          - 0xffff: All devices in PAN
-          - 0xfffe: Reserved
-          - 0xfffd: macRxOnWhenIdle = TRUE
-          - 0xfffc: All routers and coordinator
-          - 0xfffb: Low power routers only
-          - 0xfff8 - 0xfffa: Reserved
     """
     # Links and nodes are sets has they are supposed to be unique
     nodes = set()
@@ -174,10 +185,22 @@ def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
                 min_packet <= packet_number and max_packet is None) or (
                 min_packet <= packet_number <= max_packet
         ):
-            # 802.15.4 data, meaning all the Zigbee and more
-            short_parse_packet_and_log(packet=packet, packet_number=packet_number, layer=Dot15d4Data, nodes=nodes, links=links)
-            # 802.15.4 commands
-            short_parse_packet_and_log(packet=packet, packet_number=packet_number, layer=Dot15d4Cmd, nodes=nodes, links=links)
+            # 802.15.4 data layer, meaning all the Zigbee and more
+            short_parse_packet_and_log(
+                packet=packet,
+                packet_number=packet_number,
+                layer=Dot15d4Data,
+                nodes=nodes,
+                links=links
+            )
+            # 802.15.4 command layer
+            short_parse_packet_and_log(
+                packet=packet,
+                packet_number=packet_number,
+                layer=Dot15d4Cmd,
+                nodes=nodes,
+                links=links
+            )
 
         # After the last packet to parse, leave the loop.
         elif max_packet is not None and packet_number >= max_packet:
