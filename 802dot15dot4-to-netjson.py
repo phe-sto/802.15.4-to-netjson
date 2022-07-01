@@ -102,7 +102,7 @@ def parse_pcap(pcap: str, zigbee: bool, min_packet=0, max_packet=None):
        :parameter max_packet: Last packet of the PCAP file to parse, default is
           None, which mean no limit.
 
-    It exclude all types of broadcast communication are exclude if the zigbee
+    It excludes all types of broadcast communication are excluded if the zigbee
     boolean is True for a clearer view. See the note containing an extract of
     the Zigbee specification 3.6.5 paragraph listing the different address.
 
