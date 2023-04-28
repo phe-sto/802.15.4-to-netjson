@@ -53,7 +53,7 @@ Usage
 Just need the PCAP filepath as input, can be piped. A ``--zigbee`` token
 can be added to get read of the broadcast communication for a clearer
 view. As per the specification all the nodes above 0xfff7 are reserved for
-broadcast communication and will be removed. The serve token serve the
+broadcast communication and will be removed. The ``--serve` token serve the
 netJSONgraph view of the netJSON opened in the browser at http://localhost:8005/:
 
     ``python 802dot15dot4-to-netjson.py <PCAP filepath> --zigbee --serve``
